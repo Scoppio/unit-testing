@@ -3,7 +3,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path("products/consolidate", views.consolidated_product_entries, name="consolidated_product_entries"),
+    path("products/consolidate", views.consolidated_products_entries, name="consolidated_products_entries"),
     path("products/consolidate/<int:product_id>", views.consolidated_product_entries, name="consolidated_product_entries"),
     
     path("products/<int:product_id>/decrease", views.decrease_product_quantity, name="decrease_product_quantity"),

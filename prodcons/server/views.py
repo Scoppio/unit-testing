@@ -2,13 +2,17 @@ import typing as t
 from django.http import JsonResponse
 
 from server.models import Product, ProductEntry
+from server.use_cases import consolidated_products_entries as _consolidated_products_entries, consolidated_product_entries as _consolidated_product_entries
+from server.services import ProductEntriesService
 
 
 def products():
+    # FIXME: This is a bad idea, we should never return all products at once
     return JsonResponse(Product.objects.all().values(), safe=True)
 
 
 def product_by_id(product_id):
+    # FIXME: If we have logic here, should it be here?
     return JsonResponse(Product.objects.get(id=product_id))
 
 
@@ -41,27 +45,10 @@ def decrease_product_quantity(company_id, product_id, quantity, price_per_unit):
 
 
 def consolidated_product_entries(company_id, product_id):
-    consolidated_product_entries = ProductEntry.objects.filter(company_id=company_id, product_id=product_id).values()
-    consolidate_entries = {
-        "total_quantity": sum([entry['quantity'] for entry in consolidated_product_entries]),
-        "total_price": sum([entry['quantity'] * entry['price_per_unit'] for entry in consolidated_product_entries]),
-        "product": Product.objects.get(id=product_id).name,
-        "product_id": product_id,
-    }
-    return JsonResponse(consolidate_entries)
+    res = _consolidated_product_entries(company_id, product_id, ProductEntriesService)
+    return JsonResponse(res)
 
 
-def consolidated_product_entries(company_id):
-    consolidated_product_entries: t.List[ProductEntry] = ProductEntry.objects.filter(company_id=company_id).values()
-    consolidate_entries = {}
-    for entry in consolidated_product_entries:
-        product_id = entry.product.id
-        if product_id not in consolidate_entries:
-            consolidate_entries[product_id] = {
-                "total_quantity": 0,
-                "total_price": 0,
-                "product": entry.product.name,
-                "product_id": product_id,
-            }
-        consolidate_entries[product_id]['total_quantity'] += entry['quantity']
-        consolidate_entries[product_id]['total_price'] += entry['quantity'] * entry['price_per_unit']
+def consolidated_products_entries(company_id):
+    res = _consolidated_products_entries(company_id, ProductEntriesService)
+    return JsonResponse(res)
